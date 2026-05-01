@@ -51,9 +51,9 @@ col_r = Fore.RED #red
 col_rb = Style.BRIGHT + Fore.RED #bright red
 
 # Version and token number
-token_number = int(input(col_g + f"[Número de línea del token]: " + Fore.RESET))
+#token_number = int(input(col_g + f"[Número de línea del token]: " + Fore.RESET))
 os.system('cls' if os.name == 'nt' else 'clear')
-#token_number = 1
+token_number = 1
 scriptversion = "ARU_FHL_v070425"
 
 # Variables globales

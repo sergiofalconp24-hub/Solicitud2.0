@@ -2,7 +2,7 @@ name: Ejecutar main.py diariamente
 
 on:
   schedule:
-    - cron: '0 16 * * *'  # 12:00 AM Pekín (UTC+8) = 16:00 UTC
+    - cron: '30 15 * * *'  # 11:30 PM Pekín (UTC+8) = 15:30 UTC (30 minutos antes de las 12 AM)
 
 jobs:
   run-script:
