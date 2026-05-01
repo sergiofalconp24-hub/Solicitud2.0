@@ -16,5 +16,5 @@ jobs:
         with:
           python-version: '3.9'
       
-      - name: Ejecutar main.py
-        run: python main.py
+      - name: Ejecutar main.py desde la raíz del repositorio
+        run: python ./main.py
