@@ -1,0 +1,20 @@
+name: Ejecutar main.py diariamente
+
+on:
+  schedule:
+    - cron: '0 16 * * *'  # 12:00 AM Pekín (UTC+8) = 16:00 UTC
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v3
+      
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Ejecutar main.py
+        run: python main.py
