@@ -174,6 +174,19 @@ def check_unlock_status(session, cookie_value, device_id):
         print(f"[Error проверки статуса] {e}")
         return False
 
+# Función para registrar resultados en archivo
+def save_response_log(start_time, end_time, status, response_data):
+    try:
+        with open('respuesta.txt', 'w', encoding='utf-8') as f:
+            f.write(f"=== REPORTE DE SOLICITUD DE DESBLOQUEO ===\n\n")
+            f.write(f"[Hora de Inicio]: {start_time.strftime('%Y-%m-%d %H:%M:%S.%f')} (UTC+8)\n")
+            f.write(f"[Hora de Finalización]: {end_time.strftime('%Y-%m-%d %H:%M:%S.%f')} (UTC+8)\n")
+            f.write(f"[Estado]: {status}\n")
+            f.write(f"[Respuesta]: {response_data}\n")
+        print(col_g + f"[Registro guardado]: " + Fore.RESET + f"respuesta.txt")
+    except Exception as e:
+        print(f"[Error al guardar]: {e}")
+
 # Container for working with HTTP requests
 class HTTP11Session:
     def __init__(self):
@@ -216,6 +229,7 @@ def main():
         
     device_id = generate_device_id()
     session = HTTP11Session()
+    execution_start_time = datetime.now(pytz.timezone("Asia/Shanghai"))  # Hora de inicio
 
     if check_unlock_status(session, cookie_value, device_id):
         start_beijing_time = get_initial_beijing_time()
@@ -254,43 +268,56 @@ def main():
 
                     if code == 0:
                         apply_result = data.get("apply_result")
+                        execution_end_time = datetime.now(pytz.timezone("Asia/Shanghai"))
                         if apply_result == 1:
                             print(col_g + f"[Статус]: " + Fore.RESET + f"La solicitud fue aprobada, verificando estado...")
+                            save_response_log(execution_start_time, execution_end_time, "APROBADA", json.dumps(json_response, indent=2))
                             check_unlock_status(session, cookie_value, device_id)
                         elif apply_result == 3:
                             deadline_format = data.get("deadline_format", "Не указано")
                             print(col_g + f"[Статус]: " + Fore.RESET + f"La solicitud no fue enviada, se alcanzó el límite. Intente de nuevo el {deadline_format} (Месяц/День).")
-                            input(f"Presione Enter para cerrar...")
+                            save_response_log(execution_start_time, execution_end_time, "RECHAZADA - LÍMITE ALCANZADO", json.dumps(json_response, indent=2))
                             exit()
                         elif apply_result == 4:
                             deadline_format = data.get("deadline_format", "Не указано")
                             print(col_g + f"[Статус]: " + Fore.RESET + f"La solicitud no fue enviada, se impuso un bloqueo hasta {deadline_format} (Месяц/День).")
-                            input(f"Presione Enter para cerrar...")
+                            save_response_log(execution_start_time, execution_end_time, "BLOQUEADA", json.dumps(json_response, indent=2))
                             exit()
                     elif code == 100001:
+                        execution_end_time = datetime.now(pytz.timezone("Asia/Shanghai"))
                         print(col_g + f"[Статус]: " + Fore.RESET + f"La solicitud fue rechazada, error en la petición..")
                         print(col_g + f"[ПОЛНЫЙ ОТВЕТ]: " + Fore.RESET + f"{json_response}")
+                        save_response_log(execution_start_time, execution_end_time, "RECHAZADA - ERROR EN PETICIÓN", json.dumps(json_response, indent=2))
                     elif code == 100003:
+                        execution_end_time = datetime.now(pytz.timezone("Asia/Shanghai"))
                         print(col_g + f"[Статус]: " + Fore.RESET + f"La solicitud puede haber sido aprobada, verificando estado...")
                         print(col_g + f"[Полный ответ]: " + Fore.RESET + f"{json_response}")
+                        save_response_log(execution_start_time, execution_end_time, "POSIBLEMENTE APROBADA", json.dumps(json_response, indent=2))
                         check_unlock_status(session, cookie_value, device_id)
                     elif code is not None:
+                        execution_end_time = datetime.now(pytz.timezone("Asia/Shanghai"))
                         print(col_g + f"[Статус]: " + Fore.RESET + f"Estado desconocido de la solicitud: {code}")
                         print(col_g + f"[Полный ответ]: " + Fore.RESET + f"{json_response}")
+                        save_response_log(execution_start_time, execution_end_time, f"ESTADO DESCONOCIDO (Código: {code})", json.dumps(json_response, indent=2))
                     else:
+                        execution_end_time = datetime.now(pytz.timezone("Asia/Shanghai"))
                         print(col_g + f"[Error]: " + Fore.RESET + f"Respuesta не содержит необходимого кода.")
                         print(col_g + f"[Полный ответ]: " + Fore.RESET + f"{json_response}")
+                        save_response_log(execution_start_time, execution_end_time, "ERROR - SIN CÓDIGO EN RESPUESTA", json.dumps(json_response, indent=2))
 
                 except json.JSONDecodeError:
+                    execution_end_time = datetime.now(pytz.timezone("Asia/Shanghai"))
                     print(col_g + f"[Error]: " + Fore.RESET + f"No se pudo decodificar el JSON de la respuesta..")
                     print(col_g + f"[Respuesta сервера]: " + Fore.RESET + f"{response_data}")
+                    save_response_log(execution_start_time, execution_end_time, "ERROR - JSON INVÁLIDO", str(response_data))
                 except Exception as e:
                     print(col_g + f"[Error обработки ответа]: " + Fore.RESET + f"{e}")
                     continue
 
         except Exception as e:
+            execution_end_time = datetime.now(pytz.timezone("Asia/Shanghai"))
             print(col_g + f"[Error запроса]: " + Fore.RESET + f"{e}")
-            input(f"Presione Enter para cerrar...")
+            save_response_log(execution_start_time, execution_end_time, "ERROR EN LA SOLICITUD", str(e))
             exit()
 
 if __name__ == "__main__":
