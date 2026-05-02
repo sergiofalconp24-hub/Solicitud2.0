@@ -18,3 +18,18 @@ jobs:
       
       - name: Ejecutar main.py desde la raíz del repositorio
         run: python ./main.py
+      
+      - name: Configurar Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+      
+      - name: Guardar respuesta.txt
+        run: |
+          if [ -f respuesta.txt ]; then
+            git add respuesta.txt
+            git commit -m "Actualizar respuesta.txt - $(date)"
+            git push
+          else
+            echo "respuesta.txt no fue generado"
+          fi
