@@ -1,0 +1,32 @@
+name: Solicitud de Desbloqueo Xiaomi
+
+on:
+  schedule:
+    # Ejecutar 30 minutos antes de medianoche hora de Pekín (15:30 UTC)
+    - cron: '30 15 * * *'
+  workflow_dispatch: # Permitir ejecución manual
+
+jobs:
+  unlock-request:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests pytz ntplib colorama
+
+    - name: Run unlock script
+      env:
+        # Si necesitas variables de entorno, configúralas aquí
+        # TOKEN_NUMBER: 1
+      run: |
+        python main.py
